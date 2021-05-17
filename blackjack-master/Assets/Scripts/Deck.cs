@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class Deck : MonoBehaviour
@@ -52,13 +53,60 @@ public class Deck : MonoBehaviour
         }
     }
 
+    private List<int> getDeckArrayRandomIndexes()
+    {
+        int max = values.Length;
+        int randomIndex;
+        List<int> arrayIndexes = new List<int>();
+        List<int> arrayIndexesShuffled = new List<int>();
+
+        // Array con los indiceso ordenados del 0 al 51
+        for (int e = 0; e < values.Length; e++)
+        {
+            arrayIndexes.Add(e);
+        }
+
+        /* 
+         * Voy metiendo valores de arrayIndexes a arrayIndexesShuffled
+         * Elijo un elemento aleatorio y hago un push
+         * Borro el elemento del array inicial y disminuyo el rango de numeros aleatorios
+         */
+        for (int i = 0; i < values.Length; i++)
+        {
+            randomIndex = Random.Range(0, max);
+            arrayIndexesShuffled.Add(arrayIndexes[randomIndex]);
+            arrayIndexes.RemoveAt(randomIndex);
+            max--;
+        }
+
+        return arrayIndexesShuffled;
+    }
+
     private void ShuffleCards()
     {
-        /*TODO:
-         * Barajar las cartas aleatoriamente.
-         * El método Random.Range(0,n), devuelve un valor entre 0 y n-1
-         * Si lo necesitas, puedes definir nuevos arrays.
-         */       
+        Sprite auxSprite;
+        int auxInt;
+        List<int> randomIndexesArray = getDeckArrayRandomIndexes();
+        for (int e = 0; e < randomIndexesArray.Count; e++)
+        {
+            // Guardo el sprite que esta en la posicion aleatoria dada por el arrayRandom
+            auxSprite = faces[randomIndexesArray[e]];
+            // Asigno la nueva posicion del sprite dada por el array random
+            faces[e] = faces[randomIndexesArray[e]];
+            // El spriteAux que guarde antes lo pongo en la posicion que ha quedado libre al hacer el cambio
+            faces[randomIndexesArray[e]] = auxSprite;
+
+        }
+
+        for (int i = 0; i < randomIndexesArray.Count; i++)
+        {
+            // Guardo el sprite que esta en la posicion aleatoria dada por el arrayRandom
+            auxInt = values[randomIndexesArray[i]];
+            // Asigno la nueva posicion del sprite dada por el array random
+            values[i] = values[randomIndexesArray[i]];
+            // El spriteAux que guarde antes lo pongo en la posicion que ha quedado libre al hacer el cambio
+            values[randomIndexesArray[i]] = auxInt;
+        }
     }
 
     void StartGame()
