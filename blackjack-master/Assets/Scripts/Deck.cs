@@ -230,16 +230,6 @@ public class Deck : MonoBehaviour
         }
     }
 
-    private void CalculateProbabilities()
-    {
-        /*TODO:
-         * Calcular las probabilidades de:
-         * - Teniendo la carta oculta, probabilidad de que el dealer tenga más puntuación que el jugador
-         * - Probabilidad de que el jugador obtenga entre un 17 y un 21 si pide una carta
-         * - Probabilidad de que el jugador obtenga más de 21 si pide una carta          
-         */
-    }
-
     void PushDealer()
     {
         /*TODO:
@@ -261,6 +251,10 @@ public class Deck : MonoBehaviour
 
     public void Hit()
     {
+        int playerPoints = player.GetComponent<CardHand>().points;
+        List<GameObject> playerCards = player.GetComponent<CardHand>().cards;
+        int aceCounter = 0;
+
         /*TODO: 
          * Si estamos en la mano inicial, debemos voltear la primera carta del dealer.
          */
@@ -271,6 +265,25 @@ public class Deck : MonoBehaviour
         /*TODO:
          * Comprobamos si el jugador ya ha perdido y mostramos mensaje
          */
+        for (int i = 0; i < playerCards.Count; i++)
+        {
+            if (playerCards[i].GetComponent<CardModel>().value == 11)
+            {
+                aceCounter++;
+            }
+        }
+
+        if (playerPoints > 21)
+        {
+            if (aceCounter != 0)
+            {
+                if (playerPoints - (10 * aceCounter) > 21)
+                {
+                    handleGameFinish("BANCA");
+                }
+            }
+            else { handleGameFinish("BANCA"); }
+        }
 
     }
 
