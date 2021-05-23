@@ -286,13 +286,54 @@ public class Deck : MonoBehaviour
         }
 
     }
-
+    public void handleGameFinish(string winner)
+    {
+        finalMessage.text = "Partida finalizada, Ha ganado: " + winner;
+    }
     public void Stand()
     {
+        int dealerPoints;
+        int aceCounter;
+        List<GameObject> dealerCards = dealer.GetComponent<CardHand>().cards;
         /*TODO: 
-         * Si estamos en la mano inicial, debemos voltear la primera carta del dealer.
-         */
+            * Si estamos en la mano inicial, debemos voltear la primera carta del dealer.
+            */
+        dealerCards[0].GetComponent<CardModel>().ToggleFace(true);
 
+        while (1 != 0)
+        {
+            dealerPoints = dealer.GetComponent<CardHand>().points;
+            aceCounter = 0;
+
+            for (int i = 0; i < dealerCards.Count; i++)
+            {
+                if (dealerCards[i].GetComponent<CardModel>().value == 11)
+                {
+                    aceCounter++;
+                }
+            }
+
+            if (dealerPoints > 21)
+            {
+                if (aceCounter != 0)
+                {
+                    if (dealerPoints - (10 * aceCounter) < 22)
+                    {
+                        dealerPoints = dealerPoints - (10 * aceCounter);
+                    }
+                }
+            }
+
+            if (dealerPoints <= 16)
+            {
+                PushDealer();
+            }
+            else if (dealerPoints >= 17)
+            {
+                handleGameFinish(winCheck());
+                break;
+            }
+        }
         /*TODO:
          * Repartimos cartas al dealer si tiene 16 puntos o menos
          * El dealer se planta al obtener 17 puntos o más
