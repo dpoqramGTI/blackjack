@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Deck : MonoBehaviour
 {
     public Sprite[] faces;
+    public Sprite[] facesCopy;
     public GameObject dealer;
     public GameObject player;
     public Button hitButton;
@@ -12,6 +14,9 @@ public class Deck : MonoBehaviour
     public Button playAgainButton;
     public Text finalMessage;
     public Text probMessage;
+    public Text moneyText;
+    private int money = 1000;
+    private int onPlayBetAmmount = 0;
 
     public int[] values = new int[52];
     int cardIndex = 0;
@@ -19,13 +24,13 @@ public class Deck : MonoBehaviour
     private void Awake()
     {
         InitCardValues();
-
     }
 
     private void Start()
     {
         ShuffleCards();
         StartGame();
+        moneyText.text = money.ToString();
     }
 
     private void InitCardValues()
@@ -33,7 +38,11 @@ public class Deck : MonoBehaviour
         int palosBarajaContador = 0;
         for (int i = 0; i < values.Length; i++)
         {
-            if (i - palosBarajaContador < 10)
+            if (i - palosBarajaContador == 0)
+            {
+                values[i] = 11;
+            }
+            else if (i - palosBarajaContador < 10)
             {
                 // Cartas del 1 al 10
                 values[i] = (i - palosBarajaContador) + 1;
@@ -47,9 +56,40 @@ public class Deck : MonoBehaviour
             {
                 // Al terminar con un palo sumo las 13 cartas al contador
                 palosBarajaContador += 13;
-                // Comienzo la iteracion con el 1 para el siguiente palo
-                values[i] = 1;
+                // Comienzo la iteracion con el 11 (1 o 10) para el siguiente palo
+                values[i] = 11;
             }
+        }
+        // Copia de array sin referencia
+        facesCopy.CopyTo(faces, 0);
+    }
+
+    private void ShuffleCards()
+    {
+        InitCardValues();
+
+        Sprite auxSprite;
+        int auxInt;
+        List<int> randomIndexesArray = getDeckArrayRandomIndexes();
+        for (int e = 0; e < randomIndexesArray.Count; e++)
+        {
+            // Guardo el sprite que esta en la posicion aleatoria dada por el arrayRandom
+            auxSprite = faces[randomIndexesArray[e]];
+            // Asigno la nueva posicion del sprite dada por el array random
+            faces[e] = faces[randomIndexesArray[e]];
+            // El spriteAux que guarde antes lo pongo en la posicion que ha quedado libre al hacer el cambio
+            faces[randomIndexesArray[e]] = auxSprite;
+
+        }
+
+        for (int i = 0; i < randomIndexesArray.Count; i++)
+        {
+            // Guardo el sprite que esta en la posicion aleatoria dada por el arrayRandom
+            auxInt = values[randomIndexesArray[i]];
+            // Asigno la nueva posicion del sprite dada por el array random
+            values[i] = values[randomIndexesArray[i]];
+            // El spriteAux que guarde antes lo pongo en la posicion que ha quedado libre al hacer el cambio
+            values[randomIndexesArray[i]] = auxInt;
         }
     }
 
@@ -82,30 +122,47 @@ public class Deck : MonoBehaviour
         return arrayIndexesShuffled;
     }
 
-    private void ShuffleCards()
+    void StartGame()
     {
-        Sprite auxSprite;
-        int auxInt;
-        List<int> randomIndexesArray = getDeckArrayRandomIndexes();
-        for (int e = 0; e < randomIndexesArray.Count; e++)
+        for (int i = 0; i < 2; i++)
         {
-            // Guardo el sprite que esta en la posicion aleatoria dada por el arrayRandom
-            auxSprite = faces[randomIndexesArray[e]];
-            // Asigno la nueva posicion del sprite dada por el array random
-            faces[e] = faces[randomIndexesArray[e]];
-            // El spriteAux que guarde antes lo pongo en la posicion que ha quedado libre al hacer el cambio
-            faces[randomIndexesArray[e]] = auxSprite;
+            PushPlayer();
+            PushDealer();
 
+            /*TODO:
+             * Si alguno de los dos obtiene Blackjack, termina el juego y mostramos mensaje
+             */
         }
 
-        for (int i = 0; i < randomIndexesArray.Count; i++)
+        Invoke("checkForInitialBlackjack", 1f);
+    }
+    private void checkForInitialBlackjack()
+    {
+        List<GameObject> dealerCards = dealer.GetComponent<CardHand>().cards;
+
+        if (values[1] == 10 && values[3] == 11)
         {
-            // Guardo el sprite que esta en la posicion aleatoria dada por el arrayRandom
-            auxInt = values[randomIndexesArray[i]];
-            // Asigno la nueva posicion del sprite dada por el array random
-            values[i] = values[randomIndexesArray[i]];
-            // El spriteAux que guarde antes lo pongo en la posicion que ha quedado libre al hacer el cambio
-            values[randomIndexesArray[i]] = auxInt;
+            dealerCards[0].GetComponent<CardModel>().ToggleFace(true);
+            Debug.LogError("BLACKJACK BANCA");
+            handleGameFinish("BANCA");
+        }
+        else if (values[3] == 10 && values[1] == 11)
+        {
+            dealerCards[0].GetComponent<CardModel>().ToggleFace(true);
+            Debug.LogError("BLACKJACK BANCA");
+            handleGameFinish("BANCA");
+        }
+        else if (values[0] == 10 && values[2] == 11)
+        {
+            dealerCards[0].GetComponent<CardModel>().ToggleFace(true);
+            Debug.LogError("BLACKJACK JUGADOR");
+            handleGameFinish("JUGADOR");
+        }
+        else if (values[2] == 10 && values[0] == 11)
+        {
+            dealerCards[0].GetComponent<CardModel>().ToggleFace(true);
+            Debug.LogError("BLACKJACK JUGADOR");
+            handleGameFinish("JUGADOR");
         }
     }
     private void CalculateProbabilities()
@@ -218,18 +275,6 @@ public class Deck : MonoBehaviour
         }
 
     }
-    void StartGame()
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            PushPlayer();
-            PushDealer();
-            /*TODO:
-             * Si alguno de los dos obtiene Blackjack, termina el juego y mostramos mensaje
-             */
-        }
-    }
-
     void PushDealer()
     {
         /*TODO:
@@ -244,6 +289,8 @@ public class Deck : MonoBehaviour
         /*TODO:
          * Dependiendo de cómo se implemente ShuffleCards, es posible que haya que cambiar el índice.
          */
+        //CalculateProbabilities();
+
         player.GetComponent<CardHand>().Push(faces[cardIndex], values[cardIndex]/*,cardCopy*/);
         cardIndex++;
         CalculateProbabilities();
@@ -286,9 +333,62 @@ public class Deck : MonoBehaviour
         }
 
     }
-    public void handleGameFinish(string winner)
+
+    public void bet10()
     {
-        finalMessage.text = "Partida finalizada, Ha ganado: " + winner;
+        onPlayBetAmmount = 10;
+    }
+    public void bet100()
+    {
+        onPlayBetAmmount = 100;
+    }
+    public void bet1000()
+    {
+        onPlayBetAmmount = 1000;
+    }
+    private void finishBet(int lossOrGanancy)
+    {
+        // No puede jugar con dinero que no tienes
+        if (money >= onPlayBetAmmount)
+        {
+            money += lossOrGanancy;
+            moneyText.text = money.ToString();
+        }
+    }
+
+    private string winCheck()
+    {
+        int playerPoints = player.GetComponent<CardHand>().points;
+        int dealerPoints = dealer.GetComponent<CardHand>().points;
+
+        if (playerPoints <= 21 && dealerPoints <= 21)
+        {
+            if (playerPoints > dealerPoints)
+            {
+                finishBet(onPlayBetAmmount);
+                return "JUGADOR";
+            }
+            else if (dealerPoints >= playerPoints)
+            {
+                finishBet(-onPlayBetAmmount);
+                return "BANCA";
+            }
+        }
+        else
+        {
+            if (playerPoints > 21)
+            {
+                finishBet(-onPlayBetAmmount);
+                return "BANCA";
+            }
+            else if (dealerPoints > 21)
+            {
+                finishBet(onPlayBetAmmount);
+                return "JUGADOR";
+            }
+        }
+
+        return "NONE";
     }
     public void Stand()
     {
@@ -341,7 +441,20 @@ public class Deck : MonoBehaviour
          */
 
     }
-
+    public void handleGameFinish(string winner)
+    {
+        finalMessage.text = "Partida finalizada, Ha ganado: " + winner;
+        /*if (EditorUtility.DisplayDialog("Partida finalizada", "Ha ganado: " + winner + " \n ¿Quieres jugar de nuevo?", "Yes", "No"))
+        {
+            PlayAgain();
+        }
+        else
+        {
+            EditorApplication.isPlaying = false;
+            // Solo funciona en el .exe
+            // Application.Quit();
+        }*/
+    }
     public void PlayAgain()
     {
         hitButton.interactable = true;
